@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-export function Peliculas({ onMovieClick, isCompact = false, mostrarFavoritos = false }) {
+export function Peliculas({ onMovieClick, isCompact = false, mostrarFavoritos = false, searchTerm = '', selectedGenre = null }) {
 
     const [peliculas, setPeliculas] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -10,9 +10,23 @@ export function Peliculas({ onMovieClick, isCompact = false, mostrarFavoritos = 
 
     const BASE_URL = "https://api.themoviedb.org/3/"
     const API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3OTEwNGFiNGJhOTMxOWZjZTNmNjE5MjUxOWUyYzU2MiIsIm5iZiI6MTc0Nzc2MDIwOC44MzcsInN1YiI6IjY4MmNiNDUwNTIxMWE5MTRmMjhjMGQ4YiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.neOHz3fEzVRWUHM25S9GXs6JyIbp3rULJuaV_fuPjmg"
+    
     async function fetchPeliculas() {
         try {
-            const response = await fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}&language=es-ES&page=${page}`, {
+            let url;
+            
+            if (searchTerm) {
+                // Búsqueda de películas
+                url = `${BASE_URL}/search/movie?query=${encodeURIComponent(searchTerm)}&language=es-ES&page=${page}`;
+            } else if (selectedGenre) {
+                // Filtrar por género
+                url = `${BASE_URL}/discover/movie?with_genres=${selectedGenre}&language=es-ES&page=${page}&sort_by=popularity.desc`;
+            } else {
+                // Películas populares por defecto
+                url = `${BASE_URL}/movie/popular?language=es-ES&page=${page}`;
+            }
+
+            const response = await fetch(url, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -51,16 +65,20 @@ export function Peliculas({ onMovieClick, isCompact = false, mostrarFavoritos = 
 
     useEffect(() => {
         setLoading(true);
+        setPage(1); // Reset page when search/filter changes
         if (mostrarFavoritos) {
             cargarFavoritos();
         } else {
             fetchPeliculas();
         }
-    }, [mostrarFavoritos]);    return (
+    }, [mostrarFavoritos, searchTerm, selectedGenre]);    return (
         <div className="h-full bg-gray-900 p-4 overflow-y-auto">
             <div className="max-w-full">
                 <h1 className="text-white text-2xl font-bold mb-6 text-center">
-                    {mostrarFavoritos ? 'Mis Películas Favoritas' : 'Películas Populares'}
+                    {mostrarFavoritos ? 'Mis Películas Favoritas' : 
+                     searchTerm ? `Resultados para: "${searchTerm}"` :
+                     selectedGenre ? 'Películas por Género' :
+                     'Películas Populares'}
                 </h1>
                 
                 {loading && (
@@ -79,6 +97,13 @@ export function Peliculas({ onMovieClick, isCompact = false, mostrarFavoritos = 
                     <div className="text-center text-gray-400 p-8">
                         <p>No tienes películas favoritas aún.</p>
                         <p>¡Agrega algunas desde los detalles de las películas!</p>
+                    </div>
+                )}
+                
+                {!loading && !error && peliculas.length === 0 && (searchTerm || selectedGenre) && !mostrarFavoritos && (
+                    <div className="text-center text-gray-400 p-8">
+                        <p>No se encontraron películas para tu búsqueda.</p>
+                        <p>Intenta con otros términos o filtros.</p>
                     </div>
                 )}
                 

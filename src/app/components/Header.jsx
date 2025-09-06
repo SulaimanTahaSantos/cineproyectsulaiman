@@ -8,9 +8,8 @@ const Header = () => {
 
   const vistas = [
     { name: 'Inicio', href: '/', current: true },
-    { name: 'About', href: '/About', current: false },
-    { name: 'Servicio', href: '#', current: false },
-    { name: 'Contacto', href: '#', current: false },
+    { name: 'Estrenos', href: '/estrenos', current: false },
+    { name: 'Acerca de', href: '/About', current: false },
   ]
 
   const toggleMenu = () => {
@@ -23,7 +22,7 @@ const Header = () => {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2">
-              <span className="text-xl font-bold text-gray-900">Sulaiman El Taha Santos</span>
+              <span className="text-xl font-bold text-blue-600">🎬 CineProyect</span>
             </Link>
           </div>
 
@@ -48,10 +47,10 @@ const Header = () => {
 
           <div className="hidden md:block">
             <Link
-              href="#"
+              href="/About"
               className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
             >
-              Contactanos
+              Sobre Nosotros
             </Link>
           </div>
 
@@ -118,11 +117,11 @@ const Header = () => {
             ))}
             <div className="pt-4 pb-3 border-t border-gray-200">
               <Link
-                href="#"
+                href="/About"
                 className="block w-full rounded-md bg-blue-600 px-3 py-2 text-center text-base font-medium text-white hover:bg-blue-700 transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Contactanos
+                Sobre Nosotros
               </Link>
             </div>
           </div>
