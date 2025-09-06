@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 🎬 CineProyect
 
-## Getting Started
+Una aplicación web moderna para explorar y descubrir películas, construida con Next.js 15 y TailwindCSS.
 
-First, run the development server:
+## ✨ Características
+
+- 🍿 **Explorador de Películas**: Navega por las películas más populares
+- ⭐ **Sistema de Favoritos**: Guarda tus películas favoritas
+- 📱 **Diseño Responsivo**: Optimizado para todos los dispositivos
+- 🎨 **Interfaz Moderna**: Diseño elegante con TailwindCSS
+- ⚡ **Rendimiento Optimizado**: Construido con Next.js 15
+
+## 🚀 Tecnologías Utilizadas
+
+- **Framework**: Next.js 15
+- **Estilos**: TailwindCSS 4
+- **Iconos**: Lucide React
+- **Lenguaje**: JavaScript/JSX
+
+## 🛠️ Instalación y Desarrollo
+
+1. Clona el repositorio:
+```bash
+git clone https://github.com/SulaimanTahaSantos/cineproyectsulaiman.git
+```
+
+2. Navega al directorio del proyecto:
+```bash
+cd cineproyect
+```
+
+3. Instala las dependencias:
+```bash
+npm install
+```
+
+4. Ejecuta el servidor de desarrollo:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## 📂 Estructura del Proyecto
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/
+│   ├── components/
+│   │   ├── Header.jsx       # Navegación principal
+│   │   ├── MovieExplorer.jsx # Explorador de películas
+│   │   ├── Peliculas.jsx    # Lista de películas
+│   │   └── Detalle.jsx      # Detalles de película
+│   ├── About/
+│   │   └── page.js          # Página "Acerca de"
+│   ├── layout.js            # Layout principal
+│   ├── page.js              # Página de inicio
+│   └── globals.css          # Estilos globales
+```
 
-## Learn More
+## 🎯 Próximas Funcionalidades
 
-To learn more about Next.js, take a look at the following resources:
+- [ ] Búsqueda avanzada de películas
+- [ ] Filtros por género
+- [ ] Sistema de calificaciones
+- [ ] Trailers integrados
+- [ ] Recomendaciones personalizadas
+- [ ] Modo oscuro/claro
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 👨‍💻 Desarrollador
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Sulaiman El Taha Santos**
 
-## Deploy on Vercel
+## 📄 Licencia
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Este proyecto está bajo la Licencia MIT.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+⭐ ¡Si te gusta este proyecto, no olvides darle una estrella!
