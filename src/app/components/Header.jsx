@@ -9,6 +9,7 @@ const Header = () => {
   const vistas = [
     { name: 'Inicio', href: '/', current: true },
     { name: 'Estrenos', href: '/estrenos', current: false },
+    { name: 'Mis Reservas', href: '/reservas', current: false },
     { name: 'Acerca de', href: '/About', current: false },
   ]
 

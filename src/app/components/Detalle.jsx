@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import TrailerModal from './TrailerModal';
+import HorariosPelicula from './HorariosPelicula';
+import SelectorAsientos from './SelectorAsientos';
+import ConfirmacionReserva from './ConfirmacionReserva';
 
 export default function Detalle({ movieId, onClose, onFavoritoAgregado }) {    
     const BASE_URL = "https://api.themoviedb.org/3"
@@ -11,7 +14,11 @@ export default function Detalle({ movieId, onClose, onFavoritoAgregado }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showTrailer, setShowTrailer] = useState(false);
-    const [trailerKey, setTrailerKey] = useState(null);    
+    const [trailerKey, setTrailerKey] = useState(null);
+    const [showSeatSelector, setShowSeatSelector] = useState(false);
+    const [showConfirmation, setShowConfirmation] = useState(false);
+    const [selectedFunction, setSelectedFunction] = useState(null);
+    const [reservationData, setReservationData] = useState(null);    
     async function fetchDetalle() {
         try {
             const response = await fetch(`${BASE_URL}/movie/${movieId}?api_key=${API_KEY}&language=es-ES&append_to_response=videos,credits`, {
@@ -71,6 +78,29 @@ export default function Detalle({ movieId, onClose, onFavoritoAgregado }) {
         } else {
             alert('No hay trailer disponible para esta película');
         }
+    };
+
+    const handleSelectFunction = (funcionData) => {
+        setSelectedFunction(funcionData);
+        setShowSeatSelector(true);
+    };
+
+    const handleSeatConfirmation = (reservaData) => {
+        setReservationData(reservaData);
+        setShowSeatSelector(false);
+        setShowConfirmation(true);
+    };
+
+    const handleCloseReservation = () => {
+        setShowSeatSelector(false);
+        setShowConfirmation(false);
+        setSelectedFunction(null);
+        setReservationData(null);
+    };
+
+    const handleNewReservation = () => {
+        handleCloseReservation();
+        // Opcional: cerrar el detalle o mantenerlo abierto
     };       
     const cast = detalle?.credits?.cast?.map(actor => ({
         name: actor.name,
@@ -223,15 +253,42 @@ export default function Detalle({ movieId, onClose, onFavoritoAgregado }) {
                         ))}
                       </div>
                     </div>
+
+                    {/* Sección de Horarios */}
+                    <div className="mb-8">
+                      <HorariosPelicula 
+                        movie={detalle} 
+                        onSelectFunction={handleSelectFunction}
+                      />
+                    </div>
                   </div>
                 </div>
                 
+                {/* Modales */}
                 <TrailerModal
                   isOpen={showTrailer}
                   onClose={() => setShowTrailer(false)}
                   videoKey={trailerKey}
                   movieTitle={detalle?.title}
                 />
+
+                {/* Selector de Asientos */}
+                {showSeatSelector && (
+                  <SelectorAsientos
+                    funcionData={selectedFunction}
+                    onConfirm={handleSeatConfirmation}
+                    onCancel={handleCloseReservation}
+                  />
+                )}
+
+                {/* Confirmación de Reserva */}
+                {showConfirmation && (
+                  <ConfirmacionReserva
+                    reservaData={reservationData}
+                    onClose={handleCloseReservation}
+                    onNewReservation={handleNewReservation}
+                  />
+                )}
         </>
     )
 }
