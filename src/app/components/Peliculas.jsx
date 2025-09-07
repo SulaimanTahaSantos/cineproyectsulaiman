@@ -114,7 +114,8 @@ export function Peliculas({ onMovieClick, isCompact = false, mostrarFavoritos = 
                             key={movie.id}
                             className="bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 hover:scale-105 transform transition-transform cursor-pointer"
                             onClick={() => onMovieClick(movie.id)}
-                        >                            <div className="aspect-[2/3] bg-gradient-to-br from-gray-700 to-gray-600 relative">
+                        >                            
+                        <div className="aspect-[2/3] bg-gradient-to-br from-gray-700 to-gray-600 relative">
                                 <img
                                     src={movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : '/vercel.svg'}
                                     alt={movie.title || 'Imagen de película'}
@@ -129,7 +130,8 @@ export function Peliculas({ onMovieClick, isCompact = false, mostrarFavoritos = 
                                     <span className="text-gray-500 text-xs">({movie.release_date || 'N/A'})</span>
                                 </div>
                             </div>
-                        </div>                        ))}
+                        </div>                        
+                    ))}
                     </div>
                 )}
             </div>

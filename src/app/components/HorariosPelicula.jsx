@@ -1,0 +1,161 @@
+"use client";
+
+import React, { useState } from 'react';
+import { Clock, MapPin, Users } from 'lucide-react';
+
+export default function HorariosPelicula({ movie, onSelectFunction }) {
+    const [selectedDate, setSelectedDate] = useState(0);
+
+    const generateDates = () => {
+        const dates = [];
+        for (let i = 0; i < 7; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() + i);
+            dates.push(date);
+        }
+        return dates;
+    };
+
+    // Horarios disponibles por sala
+    const salas = [
+        { id: 1, nombre: "Sala 1", capacidad: 120, tipo: "2D" },
+        { id: 2, nombre: "Sala 2", capacidad: 80, tipo: "3D" },
+        { id: 3, nombre: "Sala 3", capacidad: 150, tipo: "IMAX" },
+        { id: 4, nombre: "Sala 4", capacidad: 100, tipo: "4DX" }
+    ];
+
+    // Generar horarios realistas
+    const generateHorarios = (sala) => {
+        const horarios = [
+            { hora: "14:30", precio: sala.tipo === "IMAX" ? 180 : sala.tipo === "4DX" ? 200 : sala.tipo === "3D" ? 150 : 120, ocupados: Math.floor(Math.random() * 30) + 10 },
+            { hora: "17:00", precio: sala.tipo === "IMAX" ? 200 : sala.tipo === "4DX" ? 220 : sala.tipo === "3D" ? 170 : 140, ocupados: Math.floor(Math.random() * 40) + 20 },
+            { hora: "19:30", precio: sala.tipo === "IMAX" ? 220 : sala.tipo === "4DX" ? 250 : sala.tipo === "3D" ? 190 : 160, ocupados: Math.floor(Math.random() * 50) + 25 },
+            { hora: "22:00", precio: sala.tipo === "IMAX" ? 200 : sala.tipo === "4DX" ? 230 : sala.tipo === "3D" ? 170 : 140, ocupados: Math.floor(Math.random() * 35) + 15 }
+        ];
+        return horarios;
+    };
+
+    const dates = generateDates();
+    const selectedDateObj = dates[selectedDate];
+
+    const formatDate = (date) => {
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+
+        if (date.toDateString() === today.toDateString()) {
+            return "Hoy";
+        } else if (date.toDateString() === tomorrow.toDateString()) {
+            return "Mañana";
+        } else {
+            return date.toLocaleDateString('es-ES', { 
+                weekday: 'short', 
+                day: 'numeric',
+                month: 'short'
+            });
+        }
+    };
+
+    const getDisponibilidad = (ocupados, capacidad) => {
+        const porcentaje = (ocupados / capacidad) * 100;
+        if (porcentaje < 30) return { text: "Disponible", color: "text-green-400" };
+        if (porcentaje < 70) return { text: "Pocas plazas", color: "text-yellow-400" };
+        if (porcentaje < 90) return { text: "Casi lleno", color: "text-orange-400" };
+        return { text: "Agotado", color: "text-red-400" };
+    };
+
+    return (
+        <div className="bg-gray-800 rounded-lg p-6">
+            <h3 className="text-xl font-bold text-white mb-6">Horarios y Funciones</h3>
+            
+            <div className="mb-6">
+                <h4 className="text-sm font-medium text-gray-300 mb-3">Selecciona una fecha:</h4>
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                    {dates.map((date, index) => (
+                        <button
+                            key={index}
+                            onClick={() => setSelectedDate(index)}
+                            className={`flex-shrink-0 px-4 py-2 rounded-lg transition-colors ${
+                                selectedDate === index
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            }`}
+                        >
+                            <div className="text-center">
+                                <div className="font-medium">{formatDate(date)}</div>
+                                <div className="text-xs opacity-80">
+                                    {date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}
+                                </div>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            <div className="space-y-6">
+                {salas.map((sala) => {
+                    const horarios = generateHorarios(sala);
+                    return (
+                        <div key={sala.id} className="bg-gray-700 rounded-lg p-4">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-3">
+                                    <MapPin className="w-5 h-5 text-blue-400" />
+                                    <div>
+                                        <h5 className="font-semibold text-white">{sala.nombre}</h5>
+                                        <p className="text-sm text-gray-400">{sala.tipo} • {sala.capacidad} asientos</p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <Users className="w-5 h-5 text-gray-400 inline mr-1" />
+                                    <span className="text-sm text-gray-400">{sala.capacidad}</span>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                {horarios.map((horario, index) => {
+                                    const disponibilidad = getDisponibilidad(horario.ocupados, sala.capacidad);
+                                    const asientosLibres = sala.capacidad - horario.ocupados;
+                                    
+                                    return (
+                                        <button
+                                            key={index}
+                                            onClick={() => onSelectFunction({
+                                                movie,
+                                                sala,
+                                                fecha: selectedDateObj,
+                                                horario: horario.hora,
+                                                precio: horario.precio,
+                                                asientosLibres,
+                                                asientosOcupados: horario.ocupados
+                                            })}
+                                            disabled={asientosLibres <= 0}
+                                            className={`p-3 rounded-lg border transition-all text-left ${
+                                                asientosLibres <= 0
+                                                    ? 'bg-gray-600 border-gray-500 cursor-not-allowed opacity-50'
+                                                    : 'bg-gray-800 border-gray-600 hover:border-blue-500 hover:bg-gray-750'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Clock className="w-4 h-4 text-blue-400" />
+                                                <span className="font-medium text-white">{horario.hora}</span>
+                                            </div>
+                                            <div className="text-sm">
+                                                <div className="text-green-400 font-semibold">€{horario.precio}</div>
+                                                <div className={`${disponibilidad.color} text-xs`}>
+                                                    {disponibilidad.text}
+                                                </div>
+                                                <div className="text-gray-400 text-xs">
+                                                    {asientosLibres} libres
+                                                </div>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
