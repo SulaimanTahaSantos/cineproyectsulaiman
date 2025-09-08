@@ -2,13 +2,14 @@
 import Stripe from 'stripe';
 import { NextResponse } from 'next/server';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2023-10-16',
-});
-
 export async function POST(request) {
     try {
         console.log('📨 Recibida petición para crear sesión de pago');
+        
+        // Inicializar Stripe solo cuando se necesite
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+            apiVersion: '2023-10-16',
+        });
         
         const body = await request.json();
         console.log('📦 Body recibido:', JSON.stringify(body, null, 2));

@@ -3,16 +3,16 @@ import Stripe from 'stripe';
 import { NextResponse } from 'next/server';
 import { createSupabaseServiceClient } from '../../lib/supabase-server.js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2023-10-16',
-});
-
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
 export async function POST(request) {
     try {
         const body = await request.text();
         const signature = request.headers.get('stripe-signature');
+        
+        // Inicializar Stripe y webhook secret solo cuando se necesiten
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+            apiVersion: '2023-10-16',
+        });
+        const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
         let event;
 

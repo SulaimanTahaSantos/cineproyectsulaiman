@@ -3,15 +3,16 @@ import Stripe from 'stripe';
 import { NextResponse } from 'next/server';
 import { createSupabaseServiceClient } from '../../lib/supabase-server.js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2023-10-16',
-});
-
 export async function POST(request) {
     try {
         const { session_id } = await request.json();
 
         console.log('🔄 Verificando pago para sesión:', session_id);
+        
+        // Inicializar Stripe solo cuando se necesite
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+            apiVersion: '2023-10-16',
+        });
 
         if (!session_id) {
             console.error('❌ Session ID no proporcionado');
