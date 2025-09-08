@@ -1,16 +1,11 @@
 // Webhook para manejar eventos de Stripe
 import Stripe from 'stripe';
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createSupabaseServiceClient } from '../../lib/supabase-server.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
     apiVersion: '2023-10-16',
 });
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-);
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -67,6 +62,9 @@ async function handlePaymentSuccess(paymentIntent) {
     console.log('✅ Pago exitoso:', paymentIntent.id);
 
     try {
+        // Crear cliente de Supabase con privilegios de servicio
+        const supabase = createSupabaseServiceClient();
+
         // Actualizar el estado del pago en la base de datos
         const { error } = await supabase
             .from('pagos')
@@ -106,6 +104,9 @@ async function handlePaymentFailed(paymentIntent) {
     console.log('❌ Pago fallido:', paymentIntent.id);
 
     try {
+        // Crear cliente de Supabase con privilegios de servicio
+        const supabase = createSupabaseServiceClient();
+
         // Actualizar el estado del pago
         const { error } = await supabase
             .from('pagos')
@@ -152,6 +153,9 @@ async function handleCheckoutExpired(session) {
     console.log('⏰ Checkout expirado:', session.id);
 
     try {
+        // Crear cliente de Supabase con privilegios de servicio
+        const supabase = createSupabaseServiceClient();
+
         // Marcar la reserva como expirada
         const { error } = await supabase
             .from('reservas')

@@ -1,16 +1,11 @@
 // API Route para verificar el estado del pago
 import Stripe from 'stripe';
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createSupabaseServiceClient } from '../../lib/supabase-server.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
     apiVersion: '2023-10-16',
 });
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-);
 
 export async function POST(request) {
     try {
@@ -36,6 +31,9 @@ export async function POST(request) {
         // Actualizar la reserva en la base de datos
         if (session.payment_status === 'paid') {
             console.log('✅ Pago confirmado, actualizando reserva...');
+
+            // Crear cliente de Supabase con privilegios de servicio
+            const supabase = createSupabaseServiceClient();
 
             // Primero, buscar si existe la reserva
             const { data: reservaExistente, error: errorBusqueda } = await supabase
