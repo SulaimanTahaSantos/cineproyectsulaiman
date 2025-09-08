@@ -1,12 +1,6 @@
 // API Route para crear registros de pago con privilegios de servicio
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-// Cliente de Supabase con privilegios de servicio (bypassa RLS)
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+import { createSupabaseServiceClient } from '../../lib/supabase-server.js';
 
 export async function POST(request) {
     try {
@@ -32,6 +26,9 @@ export async function POST(request) {
                 { status: 400 }
             );
         }
+
+        // Crear cliente de Supabase con privilegios de servicio
+        const supabase = createSupabaseServiceClient();
 
         // Insertar registro de pago usando privilegios de servicio
         const { data: pago, error: pagoError } = await supabase
