@@ -1,10 +1,35 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock, MapPin, Users } from 'lucide-react';
+import { getFunciones } from '../../services/reservasService';
 
 export default function HorariosPelicula({ movie, onSelectFunction }) {
     const [selectedDate, setSelectedDate] = useState(0);
+    const [funciones, setFunciones] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        if (movie?.id) {
+            loadFunciones();
+        }
+    }, [movie?.id]);
+
+    const loadFunciones = async () => {
+        try {
+            setLoading(true);
+            console.log('Cargando funciones para película ID:', movie.id);
+            const data = await getFunciones(movie.id);
+            console.log('Funciones recibidas:', data);
+            setFunciones(data);
+        } catch (err) {
+            console.error('Error al cargar funciones:', err);
+            setError('Error al cargar horarios');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const generateDates = () => {
         const dates = [];
@@ -16,27 +41,27 @@ export default function HorariosPelicula({ movie, onSelectFunction }) {
         return dates;
     };
 
-    // Horarios disponibles por sala
-    const salas = [
-        { id: 1, nombre: "Sala 1", capacidad: 120, tipo: "2D" },
-        { id: 2, nombre: "Sala 2", capacidad: 80, tipo: "3D" },
-        { id: 3, nombre: "Sala 3", capacidad: 150, tipo: "IMAX" },
-        { id: 4, nombre: "Sala 4", capacidad: 100, tipo: "4DX" }
-    ];
-
-    // Generar horarios realistas
-    const generateHorarios = (sala) => {
-        const horarios = [
-            { hora: "14:30", precio: sala.tipo === "IMAX" ? 180 : sala.tipo === "4DX" ? 200 : sala.tipo === "3D" ? 150 : 120, ocupados: Math.floor(Math.random() * 30) + 10 },
-            { hora: "17:00", precio: sala.tipo === "IMAX" ? 200 : sala.tipo === "4DX" ? 220 : sala.tipo === "3D" ? 170 : 140, ocupados: Math.floor(Math.random() * 40) + 20 },
-            { hora: "19:30", precio: sala.tipo === "IMAX" ? 220 : sala.tipo === "4DX" ? 250 : sala.tipo === "3D" ? 190 : 160, ocupados: Math.floor(Math.random() * 50) + 25 },
-            { hora: "22:00", precio: sala.tipo === "IMAX" ? 200 : sala.tipo === "4DX" ? 230 : sala.tipo === "3D" ? 170 : 140, ocupados: Math.floor(Math.random() * 35) + 15 }
-        ];
-        return horarios;
-    };
-
     const dates = generateDates();
     const selectedDateObj = dates[selectedDate];
+
+    // Filtrar funciones por fecha seleccionada
+    const funcionesPorFecha = funciones.filter(funcion => {
+        const funcionFecha = new Date(funcion.fecha);
+        return funcionFecha.toDateString() === selectedDateObj.toDateString();
+    });
+
+    // Agrupar funciones por sala
+    const funcionesPorSala = funcionesPorFecha.reduce((acc, funcion) => {
+        const salaId = funcion.salas.id;
+        if (!acc[salaId]) {
+            acc[salaId] = {
+                sala: funcion.salas,
+                funciones: []
+            };
+        }
+        acc[salaId].funciones.push(funcion);
+        return acc;
+    }, {});
 
     const formatDate = (date) => {
         const today = new Date();
@@ -63,6 +88,26 @@ export default function HorariosPelicula({ movie, onSelectFunction }) {
         if (porcentaje < 90) return { text: "Casi lleno", color: "text-orange-400" };
         return { text: "Agotado", color: "text-red-400" };
     };
+
+    if (loading) {
+        return (
+            <div className="bg-gray-800 rounded-lg p-6">
+                <h3 className="text-xl font-bold text-white mb-6">Horarios y Funciones</h3>
+                <div className="flex items-center justify-center py-8">
+                    <div className="text-gray-400">Cargando horarios...</div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="bg-gray-800 rounded-lg p-6">
+                <h3 className="text-xl font-bold text-white mb-6">Horarios y Funciones</h3>
+                <div className="text-center text-red-400 py-8">{error}</div>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-gray-800 rounded-lg p-6">
@@ -92,10 +137,13 @@ export default function HorariosPelicula({ movie, onSelectFunction }) {
                 </div>
             </div>
 
-            <div className="space-y-6">
-                {salas.map((sala) => {
-                    const horarios = generateHorarios(sala);
-                    return (
+            {Object.keys(funcionesPorSala).length === 0 ? (
+                <div className="text-center text-gray-400 py-8">
+                    No hay funciones disponibles para esta fecha
+                </div>
+            ) : (
+                <div className="space-y-6">
+                    {Object.values(funcionesPorSala).map(({ sala, funciones: funcionesSala }) => (
                         <div key={sala.id} className="bg-gray-700 rounded-lg p-4">
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-3">
@@ -112,21 +160,22 @@ export default function HorariosPelicula({ movie, onSelectFunction }) {
                             </div>
 
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                {horarios.map((horario, index) => {
-                                    const disponibilidad = getDisponibilidad(horario.ocupados, sala.capacidad);
-                                    const asientosLibres = sala.capacidad - horario.ocupados;
+                                {funcionesSala.map((funcion) => {
+                                    const disponibilidad = getDisponibilidad(funcion.asientos_ocupados, sala.capacidad);
+                                    const asientosLibres = sala.capacidad - funcion.asientos_ocupados;
                                     
                                     return (
                                         <button
-                                            key={index}
+                                            key={funcion.id}
                                             onClick={() => onSelectFunction({
+                                                id: funcion.id,
                                                 movie,
                                                 sala,
                                                 fecha: selectedDateObj,
-                                                horario: horario.hora,
-                                                precio: horario.precio,
+                                                horario: funcion.horario,
+                                                precio: funcion.precio,
                                                 asientosLibres,
-                                                asientosOcupados: horario.ocupados
+                                                asientosOcupados: funcion.asientos_ocupados
                                             })}
                                             disabled={asientosLibres <= 0}
                                             className={`p-3 rounded-lg border transition-all text-left ${
@@ -137,10 +186,10 @@ export default function HorariosPelicula({ movie, onSelectFunction }) {
                                         >
                                             <div className="flex items-center gap-2 mb-2">
                                                 <Clock className="w-4 h-4 text-blue-400" />
-                                                <span className="font-medium text-white">{horario.hora}</span>
+                                                <span className="font-medium text-white">{funcion.horario}</span>
                                             </div>
                                             <div className="text-sm">
-                                                <div className="text-green-400 font-semibold">€{horario.precio}</div>
+                                                <div className="text-green-400 font-semibold">€{funcion.precio}</div>
                                                 <div className={`${disponibilidad.color} text-xs`}>
                                                     {disponibilidad.text}
                                                 </div>
@@ -153,9 +202,9 @@ export default function HorariosPelicula({ movie, onSelectFunction }) {
                                 })}
                             </div>
                         </div>
-                    );
-                })}
-            </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

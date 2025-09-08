@@ -9,10 +9,13 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@stripe/stripe-js": "^7.9.0",
+    "@supabase/supabase-js": "^2.57.2",
     "lucide-react": "^0.511.0",
     "next": "15.3.3",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "stripe": "^18.5.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

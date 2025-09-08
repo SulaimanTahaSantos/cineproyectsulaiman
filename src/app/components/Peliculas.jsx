@@ -40,7 +40,8 @@ export function Peliculas({ onMovieClick, isCompact = false, mostrarFavoritos = 
             }
 
             const data = await response.json();
-            console.log(data);
+            console.log('🎬 Películas cargadas:', data);
+            console.log('🔢 IDs de películas:', data.results.map(p => `${p.id} - ${p.title}`));
             setPeliculas(data.results);
         } catch (error) {
             console.error("Error en la solicitud:", error);

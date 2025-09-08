@@ -2,31 +2,49 @@
 
 import React, { useState } from 'react';
 import { Check, Download, Share2, Calendar, MapPin, Clock, CreditCard, User } from 'lucide-react';
+import { crearReserva } from '../../services/reservasService';
 
 export default function ConfirmacionReserva({ reservaData, onClose, onNewReservation }) {
     const [showSuccess, setShowSuccess] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
     const [customerInfo, setCustomerInfo] = useState({
         nombre: '',
         email: '',
         telefono: ''
     });
 
-    const handleConfirmReservation = () => {
-        // Simular proceso de pago
-        setTimeout(() => {
-            setShowSuccess(true);
-            // Guardar reserva en localStorage
-            const reservas = JSON.parse(localStorage.getItem('reservas')) || [];
-            const nuevaReserva = {
-                id: Date.now(),
-                ...reservaData,
-                cliente: customerInfo,
-                fechaReserva: new Date().toISOString(),
-                estado: 'confirmada'
+    const handleConfirmReservation = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            // Validar datos del cliente
+            if (!customerInfo.nombre || !customerInfo.email) {
+                setError('Por favor completa todos los campos obligatorios');
+                return;
+            }
+
+            // Preparar datos para Supabase
+            const reservaParaDB = {
+                nombreCliente: customerInfo.nombre,
+                emailCliente: customerInfo.email,
+                telefonoCliente: customerInfo.telefono,
+                funcionId: reservaData.id,
+                asientosSeleccionados: reservaData.asientosSeleccionados,
+                precioTotal: reservaData.precioTotal
             };
-            reservas.push(nuevaReserva);
-            localStorage.setItem('reservas', JSON.stringify(reservas));
-        }, 2000);
+
+            // Crear reserva en Supabase
+            await crearReserva(reservaParaDB);
+            
+            setShowSuccess(true);
+        } catch (err) {
+            console.error('Error al crear reserva:', err);
+            setError('Error al procesar la reserva. Inténtalo de nuevo.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const formatDate = (date) => {
@@ -226,21 +244,38 @@ export default function ConfirmacionReserva({ reservaData, onClose, onNewReserva
                         </div>
                     </div>
 
+                    {/* Mensaje de error */}
+                    {error && (
+                        <div className="bg-red-600 text-white p-3 rounded-lg mb-4">
+                            {error}
+                        </div>
+                    )}
+
                     {/* Botones */}
                     <div className="flex gap-4">
                         <button
                             onClick={onClose}
-                            className="flex-1 py-3 px-6 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                            disabled={loading}
+                            className="flex-1 py-3 px-6 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-white rounded-lg transition-colors"
                         >
                             Cancelar
                         </button>
                         <button
                             onClick={handleConfirmReservation}
-                            disabled={!customerInfo.nombre || !customerInfo.email}
+                            disabled={!customerInfo.nombre || !customerInfo.email || loading}
                             className="flex-1 py-3 px-6 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center gap-2"
                         >
-                            <CreditCard className="w-5 h-5" />
-                            Confirmar y Pagar
+                            {loading ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    Procesando...
+                                </>
+                            ) : (
+                                <>
+                                    <CreditCard className="w-5 h-5" />
+                                    Confirmar y Pagar
+                                </>
+                            )}
                         </button>
                     </div>
                 </div>
