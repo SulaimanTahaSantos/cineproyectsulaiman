@@ -1,11 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { User, X, Check, Armchair, Crown, Ban } from 'lucide-react';
+import { User, X, Check, Armchair, Crown, Ban, CreditCard, Loader2 } from 'lucide-react';
+import stripePaymentService from '../services/stripePaymentService';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function SelectorAsientos({ funcionData, onConfirm, onCancel }) {
     const [selectedSeats, setSelectedSeats] = useState([]);
     const [seatMap, setSeatMap] = useState([]);
+    const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+    const [paymentError, setPaymentError] = useState(null);
+    const { user } = useAuth();
 
     useEffect(() => {
         if (funcionData) {
@@ -84,6 +89,64 @@ export default function SelectorAsientos({ funcionData, onConfirm, onCancel }) {
             month: 'long',
             day: 'numeric'
         });
+    };
+
+    const handlePaymentProcess = async () => {
+        if (!user) {
+            setPaymentError('Debes iniciar sesión para realizar una reserva');
+            return;
+        }
+
+        if (selectedSeats.length === 0) {
+            setPaymentError('Debes seleccionar al menos un asiento');
+            return;
+        }
+
+        setIsProcessingPayment(true);
+        setPaymentError(null);
+
+        try {
+            console.log('🔄 Iniciando proceso de pago...');
+            console.log('🎫 Función ID:', funcionData.id);
+            console.log('👤 Usuario completo:', user);
+            console.log('👤 Usuario ID:', user?.id);
+            console.log('👤 Usuario email:', user?.email);
+            console.log('👤 Usuario user_metadata:', user?.user_metadata);
+            console.log('👤 Usuario app_metadata:', user?.app_metadata);
+            console.log('💺 Asientos seleccionados:', selectedSeats.map(seat => seat.id));
+            console.log('💰 Total:', getTotalPrice());
+            
+            if (!user || !user.id || !user.email) {
+                throw new Error('Usuario no autenticado correctamente');
+            }
+            
+            // Preparar datos de asientos con información de premium
+            const asientosDetalle = selectedSeats.map(seat => ({
+                id: seat.id,
+                isPremium: seat.isPremium,
+                precio: getSeatPrice(seat)
+            }));
+            
+            console.log('💺 Detalle de asientos:', asientosDetalle);
+            
+            // Usar el método correcto que crea la reserva Y procesa el pago
+            const result = await stripePaymentService.procesarReservaConPago(
+                funcionData.id,
+                asientosDetalle,
+                user,
+                getTotalPrice() // Pasar el precio total calculado
+            );
+            
+            console.log('✅ Proceso de reserva iniciado:', result);
+            
+            // El método procesarReservaConPago ya redirige automáticamente a Stripe
+            // No necesitamos hacer nada más aquí
+            
+        } catch (error) {
+            console.error('❌ Error al procesar pago:', error);
+            setPaymentError(error.message || 'Error al procesar el pago. Inténtalo de nuevo.');
+            setIsProcessingPayment(false);
+        }
     };
 
     if (!funcionData) return null;
@@ -213,26 +276,36 @@ export default function SelectorAsientos({ funcionData, onConfirm, onCancel }) {
               </div>
             )}
 
+            {paymentError && (
+              <div className="mb-4 p-3 bg-red-900/50 border border-red-600 rounded-lg">
+                <p className="text-red-400 text-sm">{paymentError}</p>
+              </div>
+            )}
+
             <div className="flex gap-4">
               <button
                 onClick={onCancel}
-                className="flex-1 py-3 px-6 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                disabled={isProcessingPayment}
+                className="flex-1 py-3 px-6 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
               >
                 Cancelar
               </button>
               <button
-                onClick={() =>
-                  onConfirm({
-                    ...funcionData,
-                    asientosSeleccionados: selectedSeats,
-                    precioTotal: getTotalPrice(),
-                  })
-                }
-                disabled={selectedSeats.length === 0}
-                className="flex-1 py-3 px-6 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+                onClick={handlePaymentProcess}
+                disabled={selectedSeats.length === 0 || isProcessingPayment}
+                className="flex-1 py-3 px-6 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center gap-2"
               >
-                <Check className="w-5 h-5" />
-                Confirmar Selección
+                {isProcessingPayment ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Procesando...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="w-5 h-5" />
+                    Pagar €{getTotalPrice()}
+                  </>
+                )}
               </button>
             </div>
           </div>

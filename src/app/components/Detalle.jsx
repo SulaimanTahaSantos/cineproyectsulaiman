@@ -6,10 +6,16 @@ import TrailerModal from './TrailerModal';
 import HorariosPelicula from './HorariosPelicula';
 import SelectorAsientos from './SelectorAsientos';
 import ConfirmacionReserva from './ConfirmacionReserva';
+import { useAuth } from '../../contexts/AuthContext';
+import { agregarFavorito, quitarFavorito, esFavorito } from '../../services/favoritosService';
+import AuthModal from './AuthModal';
 
 export default function Detalle({ movieId, onClose, onFavoritoAgregado }) {    
     const BASE_URL = "https://api.themoviedb.org/3"
     const API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3OTEwNGFiNGJhOTMxOWZjZTNmNjE5MjUxOWUyYzU2MiIsIm5iZiI6MTc0Nzc2MDIwOC44MzcsInN1YiI6IjY4MmNiNDUwNTIxMWE5MTRmMjhjMGQ4YiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.neOHz3fEzVRWUHM25S9GXs6JyIbp3rULJuaV_fuPjmg"
+    
+    const { user, isAuthenticated } = useAuth();
+    
     const [detalle, setDetalle] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -18,7 +24,10 @@ export default function Detalle({ movieId, onClose, onFavoritoAgregado }) {
     const [showSeatSelector, setShowSeatSelector] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [selectedFunction, setSelectedFunction] = useState(null);
-    const [reservationData, setReservationData] = useState(null);    
+    const [reservationData, setReservationData] = useState(null);
+    const [showAuthModal, setShowAuthModal] = useState(false);
+    const [isFavorito, setIsFavorito] = useState(false);
+    const [favoritoLoading, setFavoritoLoading] = useState(false);    
     async function fetchDetalle() {
         try {
             const response = await fetch(`${BASE_URL}/movie/${movieId}?api_key=${API_KEY}&language=es-ES&append_to_response=videos,credits`, {
@@ -58,6 +67,24 @@ export default function Detalle({ movieId, onClose, onFavoritoAgregado }) {
             fetchDetalle();
         }
     }, [movieId]);
+
+    // Verificar si la película es favorita cuando el usuario está autenticado
+    useEffect(() => {
+        if (isAuthenticated && movieId) {
+            checkFavorito();
+        } else {
+            setIsFavorito(false);
+        }
+    }, [isAuthenticated, movieId]);
+
+    const checkFavorito = async () => {
+        try {
+            const favorito = await esFavorito(movieId);
+            setIsFavorito(favorito);
+        } catch (error) {
+            console.error('Error al verificar favorito:', error);
+        }
+    };
 
     useEffect(() => {
         const handleEscape = (e) => {
@@ -141,28 +168,36 @@ export default function Detalle({ movieId, onClose, onFavoritoAgregado }) {
                 <p>No se encontraron detalles de la película</p>
             </div>
         );
-    }        const favoritos = () => {
-        const peliculasFavoritas = JSON.parse(localStorage.getItem('favoritos')) || [];
-        if (!peliculasFavoritas.some(fav => fav.id === detalle.id)) {
-            peliculasFavoritas.push({
-                id: detalle.id,
-                title: detalle.title,
-                poster_path: detalle.poster_path,
-                backdrop_path: detalle.backdrop_path,
-                overview: detalle.overview,
-                release_date: detalle.release_date,
-                vote_average: detalle.vote_average,
-                genres: detalle.genres
-            });
-            localStorage.setItem('favoritos', JSON.stringify(peliculasFavoritas));
-            alert("Película añadida a favoritos");
-            if (onFavoritoAgregado) {
-                onFavoritoAgregado();
-            }
-        } else {
-            alert("Esta película ya está en favoritos");
-        }
     }
+
+    const handleFavoritos = async () => {
+        if (!isAuthenticated) {
+            setShowAuthModal(true);
+            return;
+        }
+
+        try {
+            setFavoritoLoading(true);
+            
+            if (isFavorito) {
+                await quitarFavorito(movieId);
+                setIsFavorito(false);
+                alert("Película quitada de favoritos");
+            } else {
+                await agregarFavorito(movieId);
+                setIsFavorito(true);
+                alert("Película añadida a favoritos");
+                if (onFavoritoAgregado) {
+                    onFavoritoAgregado();
+                }
+            }
+        } catch (error) {
+            console.error('Error al gestionar favorito:', error);
+            alert('Error al gestionar favorito. Inténtalo de nuevo.');
+        } finally {
+            setFavoritoLoading(false);
+        }
+    };
     
     return (
         <>
@@ -188,8 +223,16 @@ export default function Detalle({ movieId, onClose, onFavoritoAgregado }) {
                 <div className="mb-4">
                   <h1 className="text-2xl font-bold mb-3">{detalle.title}</h1>
                   <div className="flex gap-2 mb-4">
-                    <button onClick={favoritos} className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded-lg transition-colors text-sm">
-                      Añadir a Favoritos
+                    <button 
+                      onClick={handleFavoritos} 
+                      disabled={favoritoLoading}
+                      className={`flex items-center gap-2 px-3 py-1 rounded-lg transition-colors text-sm ${
+                        isFavorito 
+                          ? 'bg-red-600 hover:bg-red-700' 
+                          : 'bg-gray-800 hover:bg-gray-700'
+                      }`}
+                    >
+                      {favoritoLoading ? 'Cargando...' : (isFavorito ? '❤️ Quitar de Favoritos' : '🤍 Añadir a Favoritos')}
                     </button>
                     <button 
                       onClick={handleWatchTrailer}
@@ -289,6 +332,13 @@ export default function Detalle({ movieId, onClose, onFavoritoAgregado }) {
                     onNewReservation={handleNewReservation}
                   />
                 )}
+
+                {/* Modal de Autenticación */}
+                <AuthModal 
+                  isOpen={showAuthModal}
+                  onClose={() => setShowAuthModal(false)}
+                  onSuccess={() => setShowAuthModal(false)}
+                />
         </>
     )
 }

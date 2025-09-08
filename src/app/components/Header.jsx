@@ -2,9 +2,23 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import { User, LogOut } from 'lucide-react'
+import { useAuth } from '../../contexts/AuthContext'
+import { signOut } from '../../services/authService'
+import AuthModal from './AuthModal'
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const { user, isAuthenticated } = useAuth()
+
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error)
+    }
+  }
 
   const vistas = [
     { name: 'Inicio', href: '/', current: true },
@@ -53,6 +67,35 @@ const Header = () => {
             >
               Sobre Nosotros
             </Link>
+          </div>
+
+          {/* Autenticación */}
+          <div className="hidden md:block">
+            {isAuthenticated ? (
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 text-gray-600">
+                  <User className="w-5 h-5" />
+                  <span className="text-sm">
+                    {user?.user_metadata?.full_name || user?.email}
+                  </span>
+                </div>
+                <button
+                  onClick={handleSignOut}
+                  className="inline-flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-red-600 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Salir
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="inline-flex items-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200"
+              >
+                <User className="w-4 h-4" />
+                Iniciar Sesión
+              </button>
+            )}
           </div>
 
           <div className="md:hidden">
@@ -116,7 +159,30 @@ const Header = () => {
                 {item.name}
               </Link>
             ))}
-            <div className="pt-4 pb-3 border-t border-gray-200">
+            
+            {/* Autenticación en móvil */}
+            <div className="pt-4 pb-3 border-t border-gray-200 space-y-2">
+              {isAuthenticated ? (
+                <>
+                  <div className="px-3 py-2 text-gray-600 text-sm">
+                    {user?.user_metadata?.full_name || user?.email}
+                  </div>
+                  <button
+                    onClick={handleSignOut}
+                    className="block w-full text-left px-3 py-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                  >
+                    Cerrar Sesión
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setShowAuthModal(true)}
+                  className="block w-full rounded-md bg-green-600 px-3 py-2 text-center text-base font-medium text-white hover:bg-green-700 transition-colors duration-200"
+                >
+                  Iniciar Sesión
+                </button>
+              )}
+              
               <Link
                 href="/About"
                 className="block w-full rounded-md bg-blue-600 px-3 py-2 text-center text-base font-medium text-white hover:bg-blue-700 transition-colors duration-200"
@@ -128,6 +194,13 @@ const Header = () => {
           </div>
         </div>
       </nav>
+
+      {/* Modal de Autenticación */}
+      <AuthModal 
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={() => setShowAuthModal(false)}
+      />
     </header>
   )
 }

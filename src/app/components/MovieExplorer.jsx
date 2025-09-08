@@ -4,6 +4,7 @@ import { Peliculas } from "./Peliculas";
 import Detalle from "./Detalle";
 import SearchBar from "./SearchBar";
 import GenreFilter from "./GenreFilter";
+import MovieDebugInfo from "./MovieDebugInfo";
 
 export default function MovieExplorer() {
     const [seleccionarIdPelicula, setseleccionarIdPelicula] = useState(null);
@@ -95,6 +96,7 @@ export default function MovieExplorer() {
             
             <div className="flex flex-1">               
                 <div className={`transition-all duration-300 ${seleccionarIdPelicula ? 'w-1/2' : 'w-full'}`}>
+                    <MovieDebugInfo />
                     <Peliculas 
                         onMovieClick={handleMovieClick} 
                         isCompact={seleccionarIdPelicula !== null}
