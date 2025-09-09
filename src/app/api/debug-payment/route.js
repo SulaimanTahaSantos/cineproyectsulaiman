@@ -1,6 +1,7 @@
 // API Route simplificada para debug de Stripe
 import Stripe from 'stripe';
 import { NextResponse } from 'next/server';
+import { getStripeUrls } from '../../../lib/utils';
 
 export async function POST(request) {
     console.log('🔍 DEBUG: Iniciando creación de sesión de pago...');
@@ -41,12 +42,16 @@ export async function POST(request) {
         // Crear sesión de prueba simplificada
         console.log('🔄 Creando sesión de Stripe...');
         
+        // Obtener URLs dinámicamente
+        const { success_url, cancel_url } = getStripeUrls(request);
+        console.log('🔗 URLs de debug generadas:', { success_url, cancel_url });
+        
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             mode: 'payment',
             currency: 'eur',
-            success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reserva-exitosa?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reserva-cancelada`,
+            success_url,
+            cancel_url,
             line_items: [
                 {
                     price_data: {

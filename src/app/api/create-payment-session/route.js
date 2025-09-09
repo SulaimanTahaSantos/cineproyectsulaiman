@@ -1,6 +1,7 @@
 // API Route para crear sesión de pago con Stripe
 import Stripe from 'stripe';
 import { NextResponse } from 'next/server';
+import { getStripeUrls } from '../../../lib/utils';
 
 export async function POST(request) {
     try {
@@ -14,7 +15,11 @@ export async function POST(request) {
         const body = await request.json();
         console.log('📦 Body recibido:', JSON.stringify(body, null, 2));
         
-        const { reserva, success_url, cancel_url } = body;
+        const { reserva } = body;
+        
+        // Obtener URLs dinámicamente basadas en el request
+        const { success_url, cancel_url } = getStripeUrls(request);
+        console.log('🔗 URLs generadas:', { success_url, cancel_url });
 
         if (!reserva) {
             console.error('❌ No se recibieron datos de reserva');
