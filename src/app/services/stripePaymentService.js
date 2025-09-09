@@ -22,8 +22,7 @@ class StripePaymentService {
                 },
                 body: JSON.stringify({
                     reserva: reservaData,
-                    success_url: `${window.location.origin}/reserva-exitosa?session_id={CHECKOUT_SESSION_ID}`,
-                    cancel_url: `${window.location.origin}/reserva-cancelada`,
+                    // Las URLs se generan automáticamente en el servidor
                 }),
             });
 
